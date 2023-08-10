@@ -10,3 +10,6 @@ settings.json
 
 .env
 */logfiles
+
+.DS_Store
+*/.DS_Store
