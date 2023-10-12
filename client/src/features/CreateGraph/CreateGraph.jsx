@@ -45,6 +45,7 @@ const CreateGraph = () => {
   const valid = errors.length === 0 && values.name !== "";
   const [plugins, setPlugins] = useState();
   const { openSnackbar } = useContext(SnackbarContext);
+  const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
     const fetchPlugins = async () => {
@@ -94,6 +95,36 @@ const CreateGraph = () => {
     setMetrics(INITIAL_METRIC_STATE);
   };
 
+  const handleInputChange = (event) => {
+    setInputValue(event.target.value);
+    console.log(inputValue);
+  };
+
+  const handleButtonClick = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/crawler/run-script', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(inputValue), // Send plain string value
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json(); // Assuming server returns error details in JSON format
+        console.error('Error data:', errorData);
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log(data);
+    } catch (error) {
+      console.error('Error executing script:', error);
+    }
+  };
+  
+  
+
   function formatList(list, maxItems) {
     if (list.length <= maxItems) {
       return list.join(", ");
@@ -112,7 +143,7 @@ const CreateGraph = () => {
         const fieldsToCheck = ["head_type", "tail_type"];
 
         const doesNotHaveNodeClasses = json.every((obj) =>
-          fieldsToCheck.every((field) => !obj.hasOwnProperty(field))
+          fieldsToCheck.every((field) => !obj.hasOwnProperty(field)),
         );
         let nodeClasses = [];
         if (doesNotHaveNodeClasses) {
@@ -305,7 +336,34 @@ const CreateGraph = () => {
                 </Typography>
               </Box>
             </>
+            <Tooltip>
+          <Box>
+            <Typography fontWeight={700}>Input By URL</Typography>
+          </Box>
+          <Box>
+            <Tooltip title="Enter Course Url" placement="left">
+              <TextField
+                label="Enter Url"
+                value={inputValue}
+                onChange={handleInputChange}
+                sx={{ mt: 1}}
+              />
+            </Tooltip>
+          </Box>
+          <Box>
+            <LoadingButton
+              variant="contained"
+              onClick={handleButtonClick}
+              disableElevation
+              sx={{ color: theme.palette.primary.light, mt: 3}}
+            >
+              Generate
+            </LoadingButton>
+          </Box>
+          </Tooltip>
           </Stack>
+
+
           <Box sx={{ width: "100%" }} p="0.5rem 0.5rem">
             <Editor
               values={values}

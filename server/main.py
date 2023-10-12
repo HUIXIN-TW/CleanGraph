@@ -4,7 +4,7 @@ from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 import sys
 
-from routers import plugin, graph, errors, suggestions
+from routers import plugin, graph, errors, suggestions, crawler 
 
 
 class LoguruMiddleware(BaseHTTPMiddleware):
@@ -68,6 +68,7 @@ app.include_router(graph.router)
 app.include_router(errors.router)
 app.include_router(suggestions.router)
 app.include_router(plugin.router)
+app.include_router(crawler.router)
 
 if __name__ == "__main__":
     import uvicorn
