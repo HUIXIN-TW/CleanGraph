@@ -100,14 +100,19 @@ const CreateGraph = () => {
     console.log(inputValue);
   };
 
-  const handleButtonClick = async () => {
+  const handleUrl = async () => {
     try {
+      // Format the data to send
+      const dataToSend = {
+        inputValue: inputValue
+      };
+  
       const response = await fetch('http://localhost:8000/crawler/run-script', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(inputValue), // Send plain string value
+        body: JSON.stringify(dataToSend) // Send the formatted data
       });
   
       if (!response.ok) {
@@ -122,6 +127,7 @@ const CreateGraph = () => {
       console.error('Error executing script:', error);
     }
   };
+  
   
   
 
@@ -353,7 +359,7 @@ const CreateGraph = () => {
           <Box>
             <LoadingButton
               variant="contained"
-              onClick={handleButtonClick}
+              onClick={handleUrl}
               disableElevation
               sx={{ color: theme.palette.primary.light, mt: 3}}
             >
