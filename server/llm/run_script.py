@@ -99,7 +99,8 @@ def write_to_json(data: list, output_path: str) -> None:
     """Writes a list to a JSON file."""
     try:
         with open(output_path, "w") as outfile:
-            json.dump(data, outfile, indent=2)
+            outfile.write(f'const UserData = {data};')
+
     except Exception as e:
         print(f"Error writing to {output_path}: {e}")
 
@@ -158,7 +159,7 @@ def delete_folder(path: str) -> None:
 if __name__ == "__main__":
     txt_folder_path = "crawler_results"
     triple_folder_path = "triple_results"
-    combined_file_path = "combined_triple_results.json"
+    combined_file_path = "../client/src/shared/userdata.js"
 
     try:
         # input_value = input("Enter one or more space-separated URLs to process:\n")
