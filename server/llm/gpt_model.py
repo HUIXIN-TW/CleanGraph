@@ -10,7 +10,13 @@ logging.basicConfig(level=logging.INFO)
 
 
 class GPTModel:
-    def __init__(self, model_name: str, file_path: str, initial_prompt_chunk_path: str):
+    def __init__(
+        self,
+        model_name: str,
+        file_path: str,
+        initial_prompt_chunk_path: str,
+        output_file_path: str,
+    ):
         """
         Initialize the GPTModel class.
         Set the model name and the default file path.
@@ -18,6 +24,7 @@ class GPTModel:
         self._load_env_variables()
         self.model_name = model_name
         self.default_file_path = file_path
+        self.output_file_path = output_file_path
         self.initial_prompt_chunk = initial_prompt_chunk_path
         logging.info(f"Model: Set to {model_name} with chuncked triplets")
 
@@ -54,13 +61,14 @@ class GPTModel:
         """
         return Path(filename).read_text(encoding="utf-8")
 
-    def _generate_filename(self, prompt_name: str) -> str:
+    def _generate_filename(self, prompt_name: str, output_file_path: str) -> str:
         """
         Helper Method: Generate a filename based on the current datetime.
         Return the filename as a string.
         """
         current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-        return f"triple_results/{prompt_name}-output-{current_time}.json"
+        # return f"../prompts/gpt_outputs/{prompt_name}-output-{current_time}.json"
+        return f"{output_file_path}/{prompt_name}-output-{current_time}.json"
 
     def _save_to_file(self, content: str, filename: str) -> str:
         """
@@ -72,7 +80,7 @@ class GPTModel:
         output_path.write_text(json.dumps(content, indent=2))
         return filename
 
-    def _parse_chunked_result(self, chunked_result):
+    def _parse_chunked_result(self, chunked_result, recursion_depth=0):
         """
         Helper Method: Parse the chunked result into a list of triplets.
         Return the combined results as a list.
@@ -85,24 +93,50 @@ class GPTModel:
             return combined_results
 
         for chunk in chunked_result_list:
-            try:
-                json_object = json.loads(chunk)
-                if isinstance(json_object, list):
-                    for item in json_object:
-                        if all(
-                            key in item
-                            for key in ("head", "head_type", "tail", "tail_type")
-                        ):
-                            combined_results.append(item)
-                else:
-                    if all(
-                        key in json_object
-                        for key in ("head", "head_type", "tail", "tail_type")
-                    ):
-                        combined_results.append(json_object)
-            except json.JSONDecodeError as e:
-                print(f"Failed to parse JSON chunk: {chunk}. Error: {e}")
+            triple = self.check_json_format(chunk)
+            if triple:
+                combined_results.extend(triple)
         return combined_results
+
+    def check_json_format(self, chunk, retry=True):
+        """
+        Validates, parses, and checks the JSON data format.
+        """
+        valid_items = []
+
+        try:
+            json_object = json.loads(chunk)
+
+            # Function to validate the item format
+            def validate_item(item):
+                if all(
+                    key in item
+                    for key in ("head", "head_type", "relation", "tail", "tail_type")
+                ):
+                    return True
+                return False
+
+            if isinstance(json_object, list):
+                for item in json_object:
+                    if validate_item(item):
+                        valid_items.append(item)
+            else:
+                if validate_item(json_object):
+                    valid_items.append(json_object)
+
+        except json.JSONDecodeError as e:
+            if retry:
+                start_index = chunk.find("[{")
+                end_index = chunk.rfind("}")
+                if start_index != -1 and end_index != -1:
+                    json_data = chunk[start_index : end_index + 1] + "]"
+                    print(f"Failed to parse JSON chunk: {chunk}. Error: {e}")
+                    print("Clear Json format")
+                    print(json_data)
+                    return self.check_json_format(json_data, retry=False)
+            return []
+
+        return valid_items
 
     def get_triplets_chunk(self, user_message: str, chunk_size: int = 1) -> str:
         """
@@ -163,20 +197,20 @@ class GPTModel:
 
         print(json.dumps(combined_results, indent=2))
 
-        output_file = self._generate_filename("gpt-3.5-turb-chunk")
+        output_file = self._generate_filename(
+            "gpt-3.5-turb-chunk", self.output_file_path
+        )
         chunked_result_file_name = self._save_to_file(combined_results, output_file)
 
         print(f"Saved chunked results to {chunked_result_file_name}")
 
-        # kg = KnowledgeGraph(output_file)
-        # visualization_file = kg.visualize()
-
-        # print(f"Knowledge graph visualization saved as {visualization_file}.")
-
 
 if __name__ == "__main__":
-    model_name = "ft:gpt-3.5-turbo-0613:uwa-csse:uwa-dataset:84kffWR6"
-    file_path = "txt_results/MIT.txt"
-    initial_prompt_chunk_path = "initial_prompts.txt"
-    gpt = GPTModel(model_name, file_path, initial_prompt_chunk_path)
+    model_name = "gpt-3.5-turbo"
+    file_path = "../prompts/gpt_inputs/CITS1003.txt"
+    output_file_path = "../prompts/gpt_outputs"
+    initial_prompt_chunk_path = Path("initial_prompts.txt").read_text().strip()
+    if input("Do you want to use fine tuned model? (y/n): ") == "y":
+        model_name = input("Enter the fine tuned model name: ")
+    gpt = GPTModel(model_name, file_path, initial_prompt_chunk_path, output_file_path)
     gpt.main()

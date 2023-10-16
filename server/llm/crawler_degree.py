@@ -63,7 +63,9 @@ def extract_course_info(url):
                 course_structure = []
                 for title, table in zip(titles, tables):
                     if table:
-                        headers = [th.get_text(strip=True) for th in table.find_all("th")]
+                        headers = [
+                            th.get_text(strip=True) for th in table.find_all("th")
+                        ]
                         unit_info_list = []
                         for row in table.find_all("tr")[1:]:
                             cols = row.find_all("td")
@@ -71,14 +73,19 @@ def extract_course_info(url):
                             for header, col in zip(headers, cols):
                                 unit_info[header] = col.get_text(strip=True)
                             unit_info_list.append(unit_info)
-                        course_structure.append({"title": title, "units": unit_info_list})
+                        course_structure.append(
+                            {"title": title, "units": unit_info_list}
+                        )
                     else:
-                        course_structure.append({"title": title, "units": [{"Course structure": "Table Not Found"}]})
-
+                        course_structure.append(
+                            {
+                                "title": title,
+                                "units": [{"Course structure": "Table Not Found"}],
+                            }
+                        )
 
             else:
                 print("Sequencer div not found!")
-
 
             formatted_info = f"Course overview of {course_name}\n"
             for key, value in course_overview.items():
@@ -90,7 +97,7 @@ def extract_course_info(url):
             for section in course_structure:
                 formatted_info += f"\nCourse Structure of {course_name}"
                 formatted_info += f"\n{section['title']}\n"
-                for unit_info in section['units']:
+                for unit_info in section["units"]:
                     for key, value in unit_info.items():
                         formatted_info += f"{key.strip()}: {value.strip()}\n"
         else:
@@ -104,7 +111,7 @@ def extract_course_info(url):
 
 def generateTxt(url):
     # Create an output directory to store all files
-    output_directory = "txt_results/"
+    output_directory = "crawler_results/"
 
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
@@ -115,18 +122,17 @@ def generateTxt(url):
         degree_code = url.split("=")[-1]
         file_name = f"degree_{degree_code}.txt"
         file_path = os.path.join(output_directory, file_name)
-        
+
         try:
             with open(file_path, "w", encoding="utf-8") as file:
                 file.write(course_info)
         except Exception as e:
             print(f"Error occurred while saving file: {file_path}, Error: {str(e)}")
-        
+
         print(f"Information extracted from {url} and saved to {file_path}")
         return file_path
 
+
 if __name__ == "__main__":
-    # List of degree URL's from UWA accreditation explorer
     url = "https://handbooks.uwa.edu.au/coursedetails?code=62510"
     generateTxt(url)
-    

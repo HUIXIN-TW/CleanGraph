@@ -9,7 +9,7 @@ else:
 print(input_value)
 
 # Create a txt file with the provided input value
-with open('../tmp/output.txt', 'w') as file:
+with open("../tmp/output.txt", "w") as file:
     file.write(input_value)
 
 
