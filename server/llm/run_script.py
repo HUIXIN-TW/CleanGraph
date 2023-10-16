@@ -95,11 +95,22 @@ def read_json_file(file_path: str) -> list:
         return []
 
 
-def write_to_json(data: list, output_path: str) -> None:
+def write_to_json(triples: list, output_path: str) -> None:
     """Writes a list to a JSON file."""
     try:
+        filtered_triples = []
+        removed_triples = []
+        # Filter out triples with any 'null' value
+        for triple in triples:
+            if all(value is not None for value in triple.values()):
+                filtered_triples.append(triple)
+            else:
+                removed_triples.append(triple)
+        print("\nRemoved triples:")
+        print(removed_triples)
+
         with open(output_path, "w") as outfile:
-            outfile.write(f'const UserData = {data};')
+            outfile.write(f'export const UserData = {filtered_triples};')
 
     except Exception as e:
         print(f"Error writing to {output_path}: {e}")
