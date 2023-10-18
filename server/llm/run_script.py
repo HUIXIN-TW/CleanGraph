@@ -6,9 +6,6 @@ from pathlib import Path
 from . import gpt_model
 from . import crawler_degree
 from . import crawler_unit
-# import gpt_model
-# import crawler_degree
-# import crawler_unit
 
 
 def read_user_input():
